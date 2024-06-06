@@ -12,8 +12,6 @@ services:
       POSTGRES_DB: ${DB_POSTGRES_NAME}
     volumes:
       - postgres-db:/var/lib/postgresql
-    networks:
-      - backend
 
   redis:
     image: redis:6.0.7
@@ -23,8 +21,7 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DATABASES: ${CELERY_REDIS_DB}
-    networks:
-      - backend
+
   app:
     image: useruseruser2232323/url_app:latest
     command: bash -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000'
@@ -38,8 +35,6 @@ services:
     depends_on:
       - postgres
       - redis
-    networks:
-      - backend
 
   celery_worker:
     image: useruseruser2232323/url_celery:latest
@@ -52,8 +47,8 @@ services:
     depends_on:
       - postgres
       - redis
-    networks:
-      - backend
+    deploy:
+      replicas: 2
 
   celery_flower:
     image: useruseruser2232323/url_flower:latest
@@ -69,10 +64,7 @@ services:
       - celery_worker
       - postgres
       - redis
-    networks:
-      - backend
+
 volumes:
   postgres-db:
-networks:
-  backend:
-    driver: bridge
+    name: postgres-db

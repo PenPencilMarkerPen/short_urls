@@ -14,8 +14,6 @@ services:
       - "${DB_POSTGRES_PORT}:5432"
     volumes:
       - postgres-db:/var/lib/postgresql
-    networks:
-      - backend
 
   redis:
     image: redis:6.0.7
@@ -27,8 +25,7 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_DATABASES: ${CELERY_REDIS_DB}
-    networks:
-      - backend
+
   app:
     build:
       context: ..
@@ -44,8 +41,6 @@ services:
     depends_on:
       - postgres
       - redis
-    networks:
-      - backend
 
   celery_worker:
     build:
@@ -60,24 +55,8 @@ services:
     depends_on:
       - postgres
       - redis
-    networks:
-      - backend
-
-  celery_worker1:
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile
-    command: bash -c 'celery --app=app.celery.worker.celery worker --concurrency=1 --loglevel=DEBUG '
-    env_file: ../.env
-    environment:
-      POSTGRES_HOST: postgres
-      REDIS_HOST: redis
-      POSTGRES_DELAY: 5
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - backend
+    deploy:
+      replicas: 2
 
   celery_flower:
     build:
@@ -95,10 +74,7 @@ services:
       - celery_worker
       - postgres
       - redis
-    networks:
-      - backend
+
 volumes:
   postgres-db:
-networks:
-  backend:
-    driver: bridge
+    name: postgres-db
